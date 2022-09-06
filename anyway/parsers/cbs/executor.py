@@ -76,10 +76,11 @@ from anyway.models import (
     LocationAccuracy,
     ProviderCode,
     VehicleDamage,
-    Streets,
+    Streets, AccidentMarkerView,
 )
 from anyway.parsers.cbs.exceptions import CBSParsingFailed
-from anyway.utilities import ItmToWGS84, time_delta, ImporterUI, truncate_tables, chunks
+from anyway.utilities import ItmToWGS84, time_delta, ImporterUI, truncate_tables, chunks, \
+    run_query_and_insert_to_table_in_chunks
 from anyway.db_views import VIEWS
 from anyway.app_and_db import db
 from anyway.parsers.cbs.s3 import S3DataRetriever
@@ -1043,7 +1044,13 @@ def receive_rollback(conn, **kwargs):
 
 
 def create_tables():
+    chunk_size = 50000
     try:
+        truncate_tables(db, [AccidentMarkerView])
+        run_query_and_insert_to_table_in_chunks(VIEWS.create_markers_hebrew_view(db.session.query()),
+                                                AccidentMarkerView, [AccidentMarker.id], chunk_size, db.session)
+        logging.debug("after recreating markers_hebrew_view")
+
         with db.get_engine().begin() as conn:
             event.listen(conn, "rollback", receive_rollback)
             logging.debug("begin create tables")
@@ -1055,10 +1062,6 @@ def create_tables():
             logging.debug("after TRUNCATE vehicles_hebrew")
             conn.execute("TRUNCATE involved_hebrew")
             logging.debug("after TRUNCATE involved_hebrew")
-            conn.execute("TRUNCATE markers_hebrew")
-            logging.debug("after TRUNCATE markers_hebrew")
-            conn.execute("INSERT INTO markers_hebrew " + VIEWS.MARKERS_HEBREW_VIEW)
-            logging.debug("after INSERT INTO markers_hebrew")
             conn.execute("INSERT INTO involved_hebrew " + VIEWS.INVOLVED_HEBREW_VIEW)
             logging.debug("after INSERT INTO involved_hebrew")
             conn.execute("INSERT INTO vehicles_hebrew " + VIEWS.VEHICLES_HEBREW_VIEW)

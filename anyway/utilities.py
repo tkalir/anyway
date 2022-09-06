@@ -185,28 +185,15 @@ def create_query_for_next_chunk(base_query, column_to_chunk_by, starting_id, chu
         .order_by(column_to_chunk_by) \
         .limit(chunk_size)
 
-#assumes chunk_size > num of rows with the same column_to_chunk_by value
-def split_query_to_chunks(base_query, column_to_chunk_by, chunk_size):
-    last_id = None
-    reached_last_id = False
-
-    while not reached_last_id:
-        chunk = create_query_for_next_chunk(base_query, column_to_chunk_by, last_id, chunk_size)\
-            .all()
-        reached_last_id = len(chunk) < chunk_size
-        if not reached_last_id:
-            last_id = row_id(chunk[-1])
-            chunk = list(chunk.filter(lambda row: row_id(row) < last_id))
-        yield [row._asdict() for row in chunk]
-
-
 def order_query_by_primary_keys(query, keys):
     for primary_key in keys:
         query = query.order_by(primary_key)
     return query
 
+
 def get_primary_key_names(table):
     return [primary_key.name for primary_key in inspect(table)]
+
 
 def split_query_to_chunks(base_query, primary_keys, chunk_size):
     items_read = chunk_size
