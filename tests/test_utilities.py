@@ -1,13 +1,8 @@
-import logging
-
 from anyway import config
-from anyway.utilities import is_valid_number, is_a_safe_redirect_url, split_query_to_chunks, TableForTest, \
-    run_query_and_insert_to_table_in_chunks
+from anyway.utilities import is_valid_number, is_a_safe_redirect_url, split_query_to_chunks, TableForTest
 from anyway.app_and_db import db
-from sqlalchemy import MetaData, Table, Column, Integer, insert
+from sqlalchemy import Column, Integer
 from sqlalchemy.inspection import inspect
-from contextlib import contextmanager
-
 
 # The main logic is implemented in external library, the only reason for this test is to make sure that this library
 # will continue to support israeli numbers
