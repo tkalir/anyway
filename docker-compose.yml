@@ -16,6 +16,10 @@ services:
       - TWITTER_ACCESS_SECRET
       - GOOGLE_APPLICATION_CREDENTIALS=GOOGLE_APPLICATION_CREDENTIALS_KEY.json
       - MAPS_API_KEY
+      - AWS_SECRET_KEY
+      - AWS_ACCESS_KEY
+      - SELENIUM_URL=localhost:4444
+      - SELENIUM_RESULTS_URL=localhost:8084
     volumes:
       - .:/anyway
     restart: always
@@ -88,8 +92,51 @@ services:
       - airflow-webserver
       - db
 
+#  selenium:
+#    image: selenium/standalone-chrome:114.0
+#    volumes:
+#      - selenium-data:/var/selenium/tempdata
+#    ports:
+#      - "4444:4444"
+#    environment:
+#      SE_OPTS: "--host localhost"
+
+  selenium-hub:
+    image: selenium/hub:4.8.3
+    container_name: selenium-hub
+    volumes:
+      - selenium-data:/var/selenium/tempdata
+    ports:
+      - "4442:4442"
+      - "4443:4443"
+      - "4444:4444"
+    #environment:
+    #  SE_OPTS: "--host localhost"
+
+  selenium-node:
+    image: selenium/node-chrome:114.0
+    depends_on:
+      - selenium-hub
+    volumes:
+      - selenium-data:/var/selenium/tempdata
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    ports:
+      - "6900:5900"
+      - "5555:5555"
+
+  selenium-file-server:
+    build: ./selenium_nginx_docker/
+    volumes:
+      -  selenium-data:/var/selenium/tempdata
+    ports:
+      - "8084:80"
+
 volumes:
   db_data:
   anyway_etl_data:
   airflow-db:
   airflow-home:
+  selenium-data:

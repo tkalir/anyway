@@ -7,6 +7,11 @@ import logging
 import time
 from anyway import secrets
 
+selenium_url = secrets.get('SELENIUM_URL')
+selenium_hub_url = f"http://{selenium_url}/wd/hub"
+selenium_remote_results_url = secrets.get('SELENIUM_RESULTS_URL')
+CHROME_PARTIALLY_DOWNLOADED_FILE_EXTENSION = "crdownload"
+
 
 def create_chrome_browser_session(downloads_directory_path):
     options = webdriver.ChromeOptions()
@@ -17,10 +22,6 @@ def create_chrome_browser_session(downloads_directory_path):
         "profile.content_settings.exceptions.automatic_downloads.*.setting": 1,
     }
     options.add_experimental_option("prefs", prefs)
-    #browser = webdriver.Remote(
-    #    "http://selenium:4444",
-    #    options=options
-    #)
     browser = webdriver.Remote(
         command_executor=f"https://{secrets.get('SELENIUM_URL')}/wd/hub",
         options=webdriver.ChromeOptions()
